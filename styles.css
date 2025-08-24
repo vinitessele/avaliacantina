@@ -126,6 +126,7 @@ body {
     bottom: -1px;
     left: 0;
     width: 100%;
+    z-index: 50;
     height: 40px;
     background: var(--bg-main);
     border-radius: 50% 50% 0 0 / 100% 100% 0 0;
@@ -183,6 +184,11 @@ body {
 .alert-floating.show {
     opacity: 1;
     transform: translateY(0);
+}
+
+.alert.fade-out{
+    opacity: 0;
+    transition: opacity 1s ease;
 }
 
 /* Seções do Formulário */
@@ -354,12 +360,14 @@ body {
     display: flex;
     justify-content: space-between;
     gap: 0.5rem;
+    overflow: auto;
 }
 
 .emoji-option {
     flex: 1;
     cursor: pointer;
     transition: var(--transition);
+    padding-bottom: 20px;
 }
 
 .emoji-option input {
@@ -368,6 +376,7 @@ body {
 
 .emoji-content {
     display: flex;
+    height: 100%;
     flex-direction: column;
     align-items: center;
     padding: 1rem 0.5rem;
