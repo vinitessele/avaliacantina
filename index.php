@@ -411,7 +411,6 @@ if ($_POST) {
 
     //alert-success desaparecer após 5 seg
       const successAlert = document.getElementById('success-alert')
-      console.log(successAlert)
 
       if (successAlert){
         const url = new URL(window.location);
