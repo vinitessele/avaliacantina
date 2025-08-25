@@ -33,7 +33,8 @@ if ($_POST) {
             ':comentarios' => $comentarios
         ]);
         
-        $sucesso = true;
+        header("Location: ". $_SERVER['PHP_SELF']. "?sucesso=1");
+        exit;
     } catch(PDOException $e) {
         $erro = "Erro ao salvar avaliação: " . $e->getMessage();
     }
@@ -72,8 +73,8 @@ if ($_POST) {
         <!-- Container principal -->
         <main class="main-content">
             <!-- Mensagens de feedback -->
-            <?php if (isset($sucesso)): ?>
-                <div class="alert alert-success">
+            <?php if (isset($_GET['sucesso'])): ?>
+                <div class="alert alert-success" id="success-alert">
                     <i class="fas fa-check-circle"></i>
                     <div>
                         <strong>Muito obrigado!</strong><br>
@@ -255,7 +256,27 @@ if ($_POST) {
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+          // Função para mostrar alertas personalizados
+          function showAlert(message, type = 'info') {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-floating`;
+            alert.innerHTML = `
+                    <i class="fas fa-info-circle"></i>
+                    <div>${message}</div>
+                `;
+
+            document.body.appendChild(alert);
+
+            setTimeout(() => alert.classList.add('show'), 100);
+            setTimeout(() => {
+              alert.classList.remove('show');
+              setTimeout(() => alert.remove(), 300);
+            }, 4000);
+          }
+
+
             // Melhorar interação com seleção de cantinas
+
             document.querySelectorAll('.cantina-option').forEach(option => {
                 option.addEventListener('click', function() {
                     document.querySelectorAll('.cantina-option').forEach(opt => {
@@ -309,62 +330,69 @@ if ($_POST) {
 
             // Validação visual do formulário
             const form = document.getElementById('evaluationForm');
-            form.addEventListener('submit', function(e) {
-                const submitBtn = document.querySelector('.submit-btn');
-                
-                // Verificar se todos os campos obrigatórios estão preenchidos
-                const requiredRadios = ['cantina', 'higiene', 'precos', 'atendimento'];
-                let isValid = true;
-                
-                requiredRadios.forEach(name => {
-                    if (!document.querySelector(`input[name="${name}"]:checked`)) {
-                        isValid = false;
-                        const section = document.querySelector(`input[name="${name}"]`).closest('.form-section, .rating-card');
-                        section.classList.add('shake');
-                        setTimeout(() => section.classList.remove('shake'), 600);
-                    }
-                });
-                
-                if (!isValid) {
-                    e.preventDefault();
-                    
-                    // Mostrar alerta personalizado
-                    showAlert('Por favor, complete todos os campos obrigatórios!', 'warning');
-                    
-                    // Scroll para o primeiro campo não preenchido
-                    const firstEmpty = document.querySelector('.shake');
-                    if (firstEmpty) {
-                        firstEmpty.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-                    
-                    return;
-                }
-                
-                // Loading state no botão
-                submitBtn.classList.add('loading');
-                submitBtn.innerHTML = `
-                    <i class="fas fa-spinner fa-spin"></i>
-                    <span>Enviando...</span>
-                `;
-            });
+            form.setAttribute('novalidate', 'true'); // Desabilita validação HTML5
 
-            // Função para mostrar alertas personalizados
-            function showAlert(message, type = 'info') {
-                const alert = document.createElement('div');
-                alert.className = `alert alert-${type} alert-floating`;
-                alert.innerHTML = `
-                    <i class="fas fa-info-circle"></i>
-                    <div>${message}</div>
-                `;
-                
-                document.body.appendChild(alert);
-                
-                setTimeout(() => alert.classList.add('show'), 100);
+
+            form.addEventListener('submit', function(e) {
+              e.preventDefault()
+                // Verificar se todos os campos obrigatórios estão preenchidos
+              const requiredRadios = ['cantina', 'higiene', 'precos', 'atendimento'];
+              let firstInvalidField = null;
+
+              for (let name of requiredRadios) {
+                const checked = document.querySelector(`input[name="${name}"]:checked`);
+                if (!checked) {
+                  // Encontrar o primeiro radio do grupo
+                  const firstRadio = document.querySelector(`input[name="${name}"]`);
+                  if (firstRadio) {
+                    firstInvalidField = firstRadio;
+                    break;
+                  }
+                }
+              }
+
+              if (firstInvalidField) {
+                e.preventDefault(); // Impedir envio
+
+                // Scroll suave até o campo
+                firstInvalidField.closest('.form-section, .rating-card').scrollIntoView({
+                  behavior: 'smooth',
+                  block: 'center'
+                });
+
+                // Aguardar o scroll terminar antes de tentar focar
                 setTimeout(() => {
-                    alert.classList.remove('show');
-                    setTimeout(() => alert.remove(), 300);
-                }, 4000);
-            }
+                  // Remover required temporariamente para evitar o erro
+                  const allRequired = document.querySelectorAll('input[required]');
+                  allRequired.forEach(input => input.removeAttribute('required'));
+
+                  // Mostrar alerta personalizado
+                  showAlert('Por favor, complete todos os campos obrigatórios!', 'warning');
+
+                  // Adicionar animação de shake
+                  const section = firstInvalidField.closest('.form-section, .rating-card');
+                  section.classList.add('shake');
+                  setTimeout(() => section.classList.remove('shake'), 600);
+
+                  // Restaurar required após um tempo
+                  setTimeout(() => {
+                    allRequired.forEach(input => input.setAttribute('required', ''));
+                  }, 1000);
+                }, 500);
+
+                return false;
+              }
+
+                // Loading state no botão
+                const submitButton = document.querySelector('.submit-btn');
+                  submitButton.classList.add('loading');
+                  submitButton.innerHTML = `
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span>Enviando...</span>`;
+
+
+              form.submit()
+            });
 
             // Animações de entrada
             const observer = new IntersectionObserver((entries) => {
@@ -378,7 +406,25 @@ if ($_POST) {
             document.querySelectorAll('.form-section, .rating-card').forEach(el => {
                 observer.observe(el);
             });
+
         });
+
+    //alert-success desaparecer após 5 seg
+      const successAlert = document.getElementById('success-alert')
+
+      if (successAlert){
+        const url = new URL(window.location);
+        if (url.searchParams.has('sucesso')) {
+          url.searchParams.delete('sucesso');
+          window.history.replaceState({}, document.title, url.toString());
+        }
+
+        setTimeout(() => {
+          successAlert.style.transition = 'opacity 1s ease';
+          successAlert.style.opacity = '0';
+          setTimeout(() => {successAlert.remove()}, 1000)
+        }, 5000)
+      }
     </script>
 </body>
 </html>
