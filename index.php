@@ -1,17 +1,5 @@
 <?php
-// config.php - Configuração do banco de dados
-$host = 'localhost';
-$dbname = 'faculdade_donaduzzi';
-$username = 'root';
-$password = '';
-
-try {
-    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch(PDOException $e) {
-    die("Erro na conexão: " . $e->getMessage());
-}
-
+require_once "config.php"; // usa a conexão PDO já definida
 // Processar formulário se foi enviado
 if ($_POST) {
     $cantina = $_POST['cantina'];
@@ -19,10 +7,12 @@ if ($_POST) {
     $precos = $_POST['precos'];
     $atendimento = $_POST['atendimento'];
     $comentarios = $_POST['comentarios'] ?? '';
+
+    $ip = getUserIP();    
     
     try {
-        $sql = "INSERT INTO avaliacoes (cantina, higiene, precos, atendimento, comentarios, data_avaliacao) 
-                VALUES (:cantina, :higiene, :precos, :atendimento, :comentarios, NOW())";
+        $sql = "INSERT INTO avaliacoes (cantina, higiene, precos, atendimento, comentarios, data_avaliacao, ip_usuario) 
+                VALUES (:cantina, :higiene, :precos, :atendimento, :comentarios, NOW(), :ip_usuario)";
         
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
@@ -30,13 +20,27 @@ if ($_POST) {
             ':higiene' => $higiene,
             ':precos' => $precos,
             ':atendimento' => $atendimento,
-            ':comentarios' => $comentarios
+            ':comentarios' => $comentarios,
+            ':ip_usuario' => $ip
         ]);
         
         header("Location: ". $_SERVER['PHP_SELF']. "?sucesso=1");
         exit;
     } catch(PDOException $e) {
         $erro = "Erro ao salvar avaliação: " . $e->getMessage();
+    }
+}
+
+
+function getUserIP() {
+    if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
+        // IP compartilhado
+        return $_SERVER['HTTP_CLIENT_IP'];
+    } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        // Pode ter múltiplos IPs (proxy, load balancer)
+        return explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0];
+    } else {
+        return $_SERVER['REMOTE_ADDR'];
     }
 }
 ?>
