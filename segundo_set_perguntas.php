@@ -191,11 +191,11 @@ function getUserIP() {
                     <div class="emoji-rating">
                         <?php
                         $alimentosOptions = [
-                            1 => ['emoji' => '💸', 'label' => 'Muito Caro'],
-                            2 => ['emoji' => '💰', 'label' => 'Caro'],
-                            3 => ['emoji' => '💵', 'label' => 'Justo'],
-                            4 => ['emoji' => '💲', 'label' => 'Barato'],
-                            5 => ['emoji' => '🤑', 'label' => 'Muito Barato']
+                            1 => ['emoji' => '😤', 'label' => 'Muito Ruim'],
+                            2 => ['emoji' => '😕', 'label' => 'Ruim'],
+                            3 => ['emoji' => '😐', 'label' => 'Regular'],
+                            4 => ['emoji' => '😊', 'label' => 'Bom'],
+                            5 => ['emoji' => '😍', 'label' => 'Excelente']
                         ];
                         foreach ($alimentosOptions as $value => $option): ?>
                             <label class="emoji-option">
